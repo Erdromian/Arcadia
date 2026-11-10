@@ -117,7 +117,7 @@ U1 → U2 → U3 (baseline commit) → U4 and U5 can go in parallel → U6. U7 i
 
 - **Goal:** one command runs Arcadia's tests in Unity 6 batchmode (R1).
 - **Requirements:** R1, R4 (first signal)
-- **Files:** `Tools/headless/new-harness-project.ps1`, `Tools/headless/run-arcadia-tests.ps1`, `Tests/Editor/HeadlessTestRunner.cs`, `Tests/Editor/Arcadia.HeadlessTests.asmdef` (only if an asmdef is needed to keep it editor-only)
+- **Files:** `Tools~/headless/new-harness-project.ps1`, `Tools~/headless/run-arcadia-tests.ps1`, `Tests/Editor/HeadlessTestRunner.cs`, `Tests/Editor/Arcadia.HeadlessTests.asmdef` (only if an asmdef is needed to keep it editor-only)
 - **Approach:** per KTD1/KTD2. Project lives in a temp or sibling folder, API level ".NET Framework", scripting backend Mono. The runner logs Arcadia initialization errors as their own failure class, so "doesn't load" and "test failed" are distinct.
 - **Test scenarios:** harness on unchanged `master` code produces either a results file or a classified load failure; a deliberately failing assertion is reported as a failure with non-zero exit; a test that never completes hits a timeout and is reported, not hung.
 - **Verification:** `run-arcadia-tests.ps1` exits within its timeout and leaves a results file.
@@ -126,7 +126,7 @@ U1 → U2 → U3 (baseline commit) → U4 and U5 can go in parallel → U6. U7 i
 
 - **Goal:** run `Source/clojure/test_clojure` against the bundled `Clojure.dll` on .NET Framework 4.8 (R2) and commit the baseline (R3).
 - **Requirements:** R2, R3
-- **Files:** `Tools/clr-tests/ClrTestHost.csproj`, `Tools/clr-tests/Program.cs`, `Tools/clr-tests/run.ps1`, `docs/baseline/2026-11-10-baseline.md`
+- **Files:** `Tools~/clr-tests/ClrTestHost.csproj`, `Tools~/clr-tests/Program.cs`, `Tools~/clr-tests/run.ps1`, `docs/baseline/2026-11-10-baseline.md`
 - **Approach:** a tiny `net48` console that references `Infrastructure/*.dll`, puts `Source/` on the Clojure load path and runs each `clojure.test-clojure.*` namespace separately, so one crash doesn't hide the rest. Record per-namespace pass/fail/error counts.
 - **Verification:** baseline file lists every test namespace and every Arcadia test group with a status. No test edited.
 
@@ -143,7 +143,7 @@ U1 → U2 → U3 (baseline commit) → U4 and U5 can go in parallel → U6. U7 i
 
 - **Goal:** build `Infrastructure/` compiler DLLs from pinned sources (R6).
 - **Requirements:** R6
-- **Files:** `Tools/build-runtime/build.ps1`, `Tools/build-runtime/README.md`, `Infrastructure/` (replaced binaries, or removed and gitignored), `.gitignore`
+- **Files:** `Tools~/build-runtime/build.ps1`, `Tools~/build-runtime/README.md`, `Infrastructure/` (replaced binaries, or removed and gitignored), `.gitignore`
 - **Approach:** per KTD3. Pin upstream ClojureCLR by tag; build `net462`; AOT-compile the `clojure.*` namespaces Arcadia needs. Read `ifrit` first for how the maintainers planned to drop committed DLLs.
 - **Test scenarios:** the U3 compiler suite on the new build does no worse than the baseline; U2 Arcadia tests do no worse; the build is byte-for-byte unnecessary, but rerunning the script yields a loadable result.
 - **Verification:** clean clone + `build.ps1` + U2 harness passes at least the baseline.
@@ -168,8 +168,8 @@ U1 → U2 → U3 (baseline commit) → U4 and U5 can go in parallel → U6. U7 i
 
 | Check | Command | Applies to |
 |---|---|---|
-| Arcadia tests in Unity 6 batchmode | `powershell -File Tools/headless/run-arcadia-tests.ps1` | U2, U4, U5 |
-| Compiler suite without Unity | `powershell -File Tools/clr-tests/run.ps1` | U3, U5 |
+| Arcadia tests in Unity 6 batchmode | `powershell -File Tools~/headless/run-arcadia-tests.ps1` | U2, U4, U5 |
+| Compiler suite without Unity | `powershell -File Tools~/clr-tests/run.ps1` | U3, U5 |
 | Compare with baseline | diff of results against `docs/baseline/` | U4, U5 |
 
 ## Definition of Done

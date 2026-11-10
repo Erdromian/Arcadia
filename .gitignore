@@ -56,3 +56,11 @@ Thumbs.db
 /Tests.meta
 /Tests/arcadia.meta
 /LICENSE.meta
+
+# ============================== #
+# Unity 6 fork tooling (2026-11) #
+# ============================== #
+# Build and test output from Tools~ scripts. Dot-folder so Unity skips it.
+/.build/
+/docs.meta
+/docs/**/*.meta
