@@ -36,6 +36,8 @@
                                 (str (.Name (class r)) ": " (first (str/split-lines (str (.Message r)))))])))]
                  (binding [*out* *err*] (println "RESULT" (str/join "\t" row)))
                  row)))]
+  ;; This ClojureCLR's spit doesn't truncate an existing file, so delete it first.
+  (System.IO.File/Delete results)
   (spit results (str/join "\n" (cons "namespace\tstatus\ttest\tpass\tfail\terror\tnote"
                                      (map #(str/join "\t" %) rows)))
         :encoding System.Text.Encoding/UTF8)
