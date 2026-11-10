@@ -21,7 +21,8 @@
   arcadia.arcadia-tests. Returns immediately; tests finish asynchronously."
   [tests-file]
   (load-file tests-file)
-  (let [w (at/run-tests 'arcadia.arcadia-tests)]
+  ;; The test registry is keyed by Namespace objects, not symbols.
+  (let [w (at/run-tests (the-ns 'arcadia.arcadia-tests))]
     (reset! state {:exec (.results w)})
     :started))
 

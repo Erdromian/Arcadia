@@ -6,13 +6,14 @@
     <TargetFramework>net48</TargetFramework>
     <LangVersion>latest</LangVersion>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <BaseIntermediateOutputPath>.....buildobjr-tests</BaseIntermediateOutputPath>
+    <BaseIntermediateOutputPath>../../.build/obj/clr-tests/</BaseIntermediateOutputPath>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Clojure"><HintPath>..\..\Infrastructure\Clojure.dll</HintPath></Reference>
-    <None Include="..\..\Infrastructure\*.dll" CopyToOutputDirectory="PreserveNewest" LinkBase="." />
+    <Reference Include="Clojure"><HintPath>../../Infrastructure/Clojure.dll</HintPath></Reference>
+    <None Include="../../Infrastructure/*.dll" CopyToOutputDirectory="PreserveNewest" LinkBase="." />
+    <None Include="run-tests.clj" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

@@ -7,6 +7,8 @@ $repo = Split-Path (Split-Path $PSScriptRoot)
 if (-not $Results) { $Results = Join-Path $repo ".build/clr-tests.tsv" }
 dotnet build (Join-Path $PSScriptRoot "ClrTestHost.csproj") -c Release -o (Join-Path $repo ".build/clr-tests") | Out-Null
 if ($LASTEXITCODE -ne 0) { throw "build failed" }
+# The host writes progress to stderr; under "Stop" PowerShell 5.1 would abort on it.
+$ErrorActionPreference = "Continue"
 & (Join-Path $repo ".build/clr-tests/ClrTestHost.exe") (Join-Path $repo "Source") $Results @Namespaces
 $code = $LASTEXITCODE
 Import-Csv $Results -Delimiter "`t" | Format-Table namespace, status, test, pass, fail, error, note -AutoSize

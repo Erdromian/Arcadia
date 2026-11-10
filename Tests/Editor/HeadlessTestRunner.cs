@@ -67,9 +67,11 @@ namespace Arcadia.Headless
                 if (r == null) return;
                 EditorApplication.update -= Tick;
                 bool complete = (bool)r.nth(0);
-                long fail = Convert.ToInt64(r.nth(3)), error = Convert.ToInt64(r.nth(4));
-                var summary = $"complete: {complete}\npass: {r.nth(2)}\nfail: {fail}\nerror: {error}\n";
-                Finish(!complete ? 3 : fail + error > 0 ? 1 : 0, summary + "\n" + r.nth(1));
+                long pass = Convert.ToInt64(r.nth(2)), fail = Convert.ToInt64(r.nth(3)), error = Convert.ToInt64(r.nth(4));
+                var summary = $"complete: {complete}\npass: {pass}\nfail: {fail}\nerror: {error}\n";
+                // No assertions at all means the runner found no tests: never report that as a pass.
+                if (pass + fail + error == 0) summary += "NO-RESULTS: no test assertions ran\n";
+                Finish(!complete ? 3 : fail + error > 0 || pass == 0 ? 1 : 0, summary + "\n" + r.nth(1));
             }
             catch (Exception e)
             {
