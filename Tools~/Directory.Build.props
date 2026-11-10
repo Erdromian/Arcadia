@@ -1,0 +1,6 @@
+<Project>
+  <!-- Keep obj/ out of the repo (and away from Unity): one folder per project under .build/obj. -->
+  <PropertyGroup>
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)../.build/obj/$(MSBuildProjectName)/$(ClojureRuntime)/</BaseIntermediateOutputPath>
+  </PropertyGroup>
+</Project>

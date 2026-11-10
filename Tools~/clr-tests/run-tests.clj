@@ -2,7 +2,8 @@
 ;; namespace, so one crash doesn't hide the rest. Started through clojure.main
 ;; (ClrTestHost.exe), which sets up the same bindings as ClojureCLR's own
 ;; run_test.clj. Args: <results.tsv> [namespace ...]
-(require '[clojure.test :as test] '[clojure.string :as str])
+(ns clr-test-runner
+  (:require [clojure.test :as test] [clojure.string :as str]))
 
 (doseq [dll ["clojure.tools.namespace.dll" "clojure.data.generators.dll"
              "clojure.test.generative.dll" "clojure.test.check.dll"]]
@@ -28,7 +29,9 @@
              (for [ns-sym namespaces]
                (let [row (try
                            (require ns-sym)
-                           (let [{:keys [test pass fail error]} (test/run-tests ns-sym)]
+                           ;; upstream's run_test.clj runs tests from the user namespace
+                           (let [{:keys [test pass fail error]} (binding [*ns* (create-ns 'user)]
+                                                                  (test/run-tests ns-sym))]
                              [ns-sym (if (zero? (+ fail error)) "ok" "failures") test pass fail error ""])
                            (catch Exception e
                              (let [r (root-cause e)]

@@ -44,12 +44,24 @@ namespace Arcadia.Headless
                     Finish(2, "LOAD-ERROR: type Arcadia.Initialization not found (Arcadia's C# did not compile; see Editor.log)");
                     return;
                 }
+                // Progress lines go to the results file as they happen, so a hang shows where it stopped.
+                Step("initialize Arcadia");
                 init.GetMethod("Initialize").Invoke(null, null);
 
                 var root = Path.GetDirectoryName(Path.GetDirectoryName(typeof(RT).Assembly.Location));
+                Step("load runner.clj");
                 RT.var("clojure.core", "load-file").invoke(Path.Combine(root, "Tests", "headless", "runner.clj"));
+                // Require the test file's dependencies one at a time first, so a hang names its namespace.
+                foreach (var ns in new[] { "arcadia.core", "arcadia.linear", "arcadia.internal.editor-callbacks",
+                                           "arcadia.internal.player-callbacks", "arcadia.debug" })
+                {
+                    Step("require " + ns);
+                    RT.var("clojure.core", "require").invoke(Symbol.intern(ns));
+                }
+                Step("load and start arcadia_tests.clj");
                 RT.var("arcadia.headless-runner", "start").invoke(Path.Combine(root, "Tests", "arcadia", "arcadia_tests.clj"));
                 poll = RT.var("arcadia.headless-runner", "poll");
+                Step("waiting for tests");
                 EditorApplication.update += Tick;
             }
             catch (Exception e)
@@ -87,6 +99,13 @@ namespace Arcadia.Headless
             EditorApplication.Exit(code);
         }
 
+        static void Step(string what)
+        {
+            var line = $"step {DateTime.Now:HH:mm:ss}: {what}";
+            Write(line + "\n", append: true);
+            Debug.Log("[arcadia-headless] " + line);
+        }
+
         static void Write(string text, bool append)
         {
             if (append) File.AppendAllText(resultsFile, text); else File.WriteAllText(resultsFile, text);
@@ -96,7 +115,9 @@ namespace Arcadia.Headless
         {
             var s = e.GetType().Name + ": " + e.Message;
             while (e.InnerException != null) { e = e.InnerException; s += "\n  caused by " + e.GetType().Name + ": " + e.Message; }
-            return s;
+            // The innermost stack names the failing Clojure function (munged) or C# method.
+            var frames = (e.StackTrace ?? "").Split('\n').Take(30);
+            return s + "\n  innermost stack:\n" + string.Join("\n", frames);
         }
 
         static string Arg(string name)
