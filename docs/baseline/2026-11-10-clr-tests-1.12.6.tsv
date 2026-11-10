@@ -1,3 +1,66 @@
 namespace	status	test	pass	fail	error	note
+clojure.test-clojure.agents	ok	7	16	0	0	
+clojure.test-clojure.api	ok	0	0	0	0	
+clojure.test-clojure.array-symbols	ok	2	44	0	0	
 clojure.test-clojure.atoms	ok	4	12	0	0	
+clojure.test-clojure.attributes	load-error					FileNotFoundException: Could not load file or assembly 'file:///C:\Users\u0701196\Documents\Arcadia\.build\clojure-clr-1.12.6\Clojure\Clojure.Tests\Clojure.Tests.Support.dll' or one of its dependencies. The system cannot find the file specified.
+clojure.test-clojure.clearing	load-error					TypeNotFoundException: Unable to find type: java.lang.reflect.Field
+clojure.test-clojure.clojure-set	ok	12	111	0	0	
+clojure.test-clojure.clojure-walk	ok	8	30	0	0	
+clojure.test-clojure.clojure-xml	load-error					Exception: No namespace: clojure.test-clojure.clojure-xml found
+clojure.test-clojure.clojure-zip	ok	0	0	0	0	
+clojure.test-clojure.compilation	ok	26	89	0	0	
+clojure.test-clojure.compilation2	load-error					FileNotFoundException: Could not load file or assembly 'file:///C:\Users\u0701196\Documents\Arcadia\.build\clojure-clr-1.12.6\Clojure\Clojure.Tests\clojure.test_clojure.compilation.line_number_examples.clj.dll' or one of its dependencies. The system cannot find the file specified.
+clojure.test-clojure.control	ok	15	215	0	0	
+clojure.test-clojure.data	ok	1	16	0	0	
+clojure.test-clojure.data-structures	ok	33	1695	0	0	
+clojure.test-clojure.data-structures-interop	ok	0	0	0	0	
+clojure.test-clojure.def	ok	4	11	0	0	
+clojure.test-clojure.delays	ok	2	6	0	0	
+clojure.test-clojure.edn	ok	0	0	0	0	
+clojure.test-clojure.errors	ok	7	29	0	0	
+clojure.test-clojure.evaluation	ok	7	50	0	0	
+clojure.test-clojure.fn	ok	1	8	0	0	
+clojure.test-clojure.for	ok	17	51	0	0	
+clojure.test-clojure.genclass	load-error					FileNotFoundException: Could not load file or assembly 'clojure.test_clojure.genclass.examples.ExampleClass' or one of its dependencies. The system cannot find the file specified.
+clojure.test-clojure.generators	ok	0	0	0	0	
+clojure.test-clojure.java-interop	ok	26	245	0	0	
+clojure.test-clojure.keywords	ok	2	11	0	0	
+clojure.test-clojure.logic	ok	6	124	0	0	
+clojure.test-clojure.macros	ok	10	36	0	0	
+clojure.test-clojure.main	ok	4	13	0	0	
+clojure.test-clojure.math	ok	12	59	0	0	
+clojure.test-clojure.metadata	ok	6	53	0	0	
+clojure.test-clojure.method-thunks	ok	4	15	0	0	
+clojure.test-clojure.multimethods	ok	11	129	0	0	
+clojure.test-clojure.ns-libs	ok	10	31	0	0	
+clojure.test-clojure.ns-libs-load-later	ok	0	0	0	0	
+clojure.test-clojure.numbers	ok	44	2811	0	0	
+clojure.test-clojure.other-functions	ok	15	261	0	0	
+clojure.test-clojure.parallel	ok	2	2	0	0	
+clojure.test-clojure.param-tags	load-error					FileNotFoundException: Could not load file or assembly 'file:///C:\Users\u0701196\Documents\Arcadia\.build\clojure-clr-1.12.6\Clojure\Clojure.Tests\Clojure.Tests.Support.dll' or one of its dependencies. The system cannot find the file specified.
+clojure.test-clojure.parse	ok	5	35	0	0	
+clojure.test-clojure.pprint	ok	57	473	0	0	
+clojure.test-clojure.predicates	ok	4	1084	0	0	
+clojure.test-clojure.printer	ok	12	70	0	0	
+clojure.test-clojure.protocols	ok	23	189	0	0	
+clojure.test-clojure.reader	ok	38	7782	0	0	
+clojure.test-clojure.reducers	ok	8	18	0	0	
+clojure.test-clojure.refs	ok	0	0	0	0	
+clojure.test-clojure.repl	load-error					Exception: namespace 'clojure.repl' not found
+clojure.test-clojure.rt	ok	4	30	0	0	
+clojure.test-clojure.run-single-test	ok	3	5	0	0	
+clojure.test-clojure.sequences	failures	72	1146	0	1	
+clojure.test-clojure.serialization	ok	0	0	0	0	
+clojure.test-clojure.server	ok	1	12	0	0	
+clojure.test-clojure.special	ok	14	24	0	0	
+clojure.test-clojure.streams	ok	5	27	0	0	
+clojure.test-clojure.string	ok	22	107	0	0	
+clojure.test-clojure.test	ok	14	58	0	0	
+clojure.test-clojure.test-fixtures	ok	6	8	0	0	
+clojure.test-clojure.transducers	ok	18	108	0	0	
+clojure.test-clojure.transients	ok	8	33	0	0	
+clojure.test-clojure.try-catch	load-error					FileNotFoundException: Could not load file or assembly 'file:///C:\Users\u0701196\Documents\Arcadia\.build\clojure-clr-1.12.6\Clojure\Clojure.Tests\Clojure.Tests.dll' or one of its dependencies. The system cannot find the file specified.
+clojure.test-clojure.vars	ok	9	25	0	0	
 clojure.test-clojure.vectors	ok	13	287	0	0	
+clojure.test-clojure.volatiles	ok	2	10	0	0	
