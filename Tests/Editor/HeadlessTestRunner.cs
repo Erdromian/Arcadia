@@ -2,10 +2,13 @@
 // Lives in its own editor-only assembly and reaches Arcadia by reflection, so it
 // still reports when Arcadia's C# fails to compile. Entry points:
 //   -executeMethod Arcadia.Headless.HeadlessTestRunner.Run
-//       [-arcadiaResults <file>] [-arcadiaTimeout <seconds>] [-arcadiaNoRepl]
-//   After the tests, ReplProbe checks the socket REPL and nREPL servers answer evals.
+//       [-arcadiaResults <file>] [-arcadiaTimeout <seconds>] [-arcadiaQuiet <seconds>] [-arcadiaNoRepl]
+//   The run ends when every test completes, or when results haven't changed for -arcadiaQuiet
+//   seconds (default 20): tests waiting on Play-mode frames never finish in edit mode, and are
+//   listed as pending. After the tests, ReplProbe checks the socket REPL and nREPL answer evals.
 //   -executeMethod Arcadia.Headless.HeadlessTestRunner.UseNetFramework   (with -quit)
-// Exit codes: 0 all pass, 1 failures/errors, 2 Arcadia did not load, 3 timeout.
+// Exit codes: 0 all pass, 1 failures/errors (tests or REPL), 2 Arcadia did not load,
+// 3 timeout (results still changing), 5 everything that ran passed but some tests stayed pending.
 using System;
 using System.IO;
 using System.Linq;
@@ -20,6 +23,7 @@ namespace Arcadia.Headless
     {
         static string resultsFile;
         static DateTime deadline;
+        static double quietSeconds;
         static Var poll;
         static ReplProbe probe;
         static int testCode;
@@ -36,6 +40,7 @@ namespace Arcadia.Headless
         {
             resultsFile = Path.GetFullPath(Arg("-arcadiaResults") ?? "arcadia-test-results.txt");
             deadline = DateTime.Now.AddSeconds(double.Parse(Arg("-arcadiaTimeout") ?? "600"));
+            quietSeconds = double.Parse(Arg("-arcadiaQuiet") ?? "20");
             Write("api-compat: " + PlayerSettings.GetApiCompatibilityLevel(NamedBuildTarget.Standalone)
                   + "\nunity: " + Application.unityVersion + "\n", append: false);
             try
@@ -79,15 +84,20 @@ namespace Arcadia.Headless
             try
             {
                 var timedOut = DateTime.Now > deadline;
-                var r = poll.invoke(timedOut) as IPersistentVector;
+                var r = poll.invoke(timedOut, quietSeconds) as IPersistentVector;
                 if (r == null) return;
                 EditorApplication.update -= Tick;
-                bool complete = (bool)r.nth(0);
+                var status = ((Keyword)r.nth(0)).Name;
                 long pass = Convert.ToInt64(r.nth(2)), fail = Convert.ToInt64(r.nth(3)), error = Convert.ToInt64(r.nth(4));
-                var summary = $"complete: {complete}\npass: {pass}\nfail: {fail}\nerror: {error}\n";
+                long pendingCount = Convert.ToInt64(r.nth(6));
+                var summary = $"status: {status}\npass: {pass}\nfail: {fail}\nerror: {error}\npending: {pendingCount}\n";
                 // No assertions at all means the runner found no tests: never report that as a pass.
                 if (pass + fail + error == 0) summary += "NO-RESULTS: no test assertions ran\n";
-                testCode = !complete ? 3 : fail + error > 0 || pass == 0 ? 1 : 0;
+                if (pendingCount > 0)
+                    summary += "\npending testers (never completed; tests waiting on Play-mode frames can't finish in edit mode):\n"
+                               + r.nth(5) + "\n";
+                // Failures win; then a run that never settled; then one that passed with tests left pending.
+                testCode = fail + error > 0 || pass == 0 ? 1 : status == "forced" ? 3 : pendingCount > 0 ? 5 : 0;
                 testText = summary + "\n" + r.nth(1);
                 if (Environment.GetCommandLineArgs().Contains("-arcadiaNoRepl")) { Finish(testCode, testText); return; }
                 Step("probing REPL servers");
@@ -107,7 +117,7 @@ namespace Arcadia.Headless
         {
             if (!probe.Done) return;
             EditorApplication.update -= TickRepl;
-            var code = testCode != 0 ? testCode : probe.Ok ? 0 : 1;
+            var code = !probe.Ok && (testCode == 0 || testCode == 5) ? 1 : testCode;
             Finish(code, testText + "\n" + probe.Report);
         }
 

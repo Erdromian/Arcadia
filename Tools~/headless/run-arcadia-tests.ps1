@@ -1,6 +1,7 @@
 # Runs Arcadia's tests headless in the harness project made by new-harness-project.ps1.
-# Exit codes: 0 pass, 1 failures, 2 Arcadia did not load, 3 timeout (see HeadlessTestRunner.cs),
-# 4 Unity hung: the editor's main thread stopped ticking, so this script killed it.
+# Exit codes: 0 pass, 1 failures, 2 Arcadia did not load, 3 timeout, 5 passed with tests pending
+# (see HeadlessTestRunner.cs), 4 Unity hung: the editor's main thread stopped ticking, so this
+# script killed it.
 param(
     [string]$Project = (Join-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot))) "Arcadia-harness"),
     [string]$Unity = "C:\Program Files\Unity\Hub\Editor\6000.6.0f1\Editor\Unity.exe",
