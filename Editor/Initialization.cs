@@ -51,7 +51,24 @@ namespace Arcadia
             // I have doubts about doing this in the static constructor - tsg
         static Initialization()
         {
+            // Asset Import Workers are background Unity processes that load editor scripts too.
+            // Initializing there starts a second socket REPL and nREPL server, which can take the
+            // ports before the editor's own and then never run evals (they don't tick the editor loop).
+            if (IsAssetImportWorker())
+                return;
             Initialize();
+        }
+
+        // Not AssetDatabase.IsAssetImportWorkerProcess(): Unity forbids calling it during
+        // serialization, and this constructor can run there (ArcadiaState.OnBeforeSerialize reaches
+        // it through PlayModeInitialization). Workers are started with "-name AssetImportWorker<n>".
+        static bool IsAssetImportWorker()
+        {
+            var args = Environment.GetCommandLineArgs();
+            for (int i = 0; i + 1 < args.Length; i++)
+                if (args[i] == "-name" && args[i + 1].StartsWith("AssetImportWorker", StringComparison.Ordinal))
+                    return true;
+            return false;
         }
 
         //public static String GetClojureDllFolder()
