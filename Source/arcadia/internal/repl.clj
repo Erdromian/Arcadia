@@ -238,7 +238,8 @@
     (Debug/Log "Starting REPL"))
   (when-not @server-running
     (reset! server-running true)
-    (let [socket (UdpClient. (IPEndPoint. IPAddress/Any port))]
+    ;; Loopback only: this REPL evaluates whatever it receives, with no authentication.
+    (let [socket (UdpClient. (IPEndPoint. IPAddress/Loopback port))]
       (set! (.. socket Client ReceiveTimeout) 200)
       (set! (.. socket Client SendBufferSize) (* 1024 5000)) ;; 5Mb
       (set! (.. socket Client ReceiveBufferSize) (* 1024 5000)) ;; 5Mb

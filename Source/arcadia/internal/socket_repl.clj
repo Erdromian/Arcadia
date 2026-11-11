@@ -160,8 +160,12 @@
     :caught #'repl-caught
     :eval #(game-thread-eval % {:callback-driver callback-driver})))
 
+;; :address is pinned to IPv4 loopback: the REPL evaluates whatever it receives, with no
+;; authentication. Without it clojure.core.server binds the first address "localhost" resolves to
+;; (::1 on Windows), which is loopback too, but only by way of the resolver.
 (def server-defaults
   {:port 37220
+   :address System.Net.IPAddress/Loopback
    :accept `repl
    :name "default-server"})
 
