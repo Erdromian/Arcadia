@@ -74,6 +74,30 @@ namespace Arcadia.Headless
                 var quoted = "\"" + unityVersion + "\"";
                 Send(s, Dict("code", "(UnityEngine.Application/unityVersion)", "id", "3", "op", "eval"));
                 Check("nrepl main-thread eval", s, got, t => Reply(t, "3") && t.Contains("5:value" + quoted.Length + ":" + quoted));
+
+                // What an editor (Calva, CIDER) does next: clone a session and send it with every op.
+                var start = got.Length;
+                Send(s, Dict("id", "4", "op", "clone"));
+                if (!Check("nrepl clone", s, got, t => Reply(t, "4") && t.Contains("11:new-session36:"))) return;
+                var at = got.ToString().IndexOf("11:new-session36:", start, StringComparison.Ordinal) + "11:new-session36:".Length;
+                var session = got.ToString(at, 36);
+
+                const string file = "(ns arcadia.probe.loaded) (defn answer \"The probe's answer.\" [] 42)";
+                Send(s, Dict("file", file, "file-name", "loaded.clj", "file-path", "probe/loaded.clj",
+                             "id", "5", "op", "load-file", "session", session));
+                Check("nrepl load-file", s, got, t => Reply(t, "5") && t.Contains("#'arcadia.probe.loaded/answer"));
+                Send(s, Dict("code", "(arcadia.probe.loaded/answer)", "id", "6", "op", "eval", "session", session));
+                Check("nrepl eval after load-file", s, got, t => Reply(t, "6") && t.Contains("5:value2:42"));
+                Send(s, Dict("id", "7", "ns", "user", "op", "info", "session", session, "symbol", "map"));
+                Check("nrepl info clojure.core/map", s, got, t => Reply(t, "7") && t.Contains("3:doc") && t.Contains("12:arglists-str"));
+                Send(s, Dict("id", "8", "ns", "user", "op", "info", "session", session, "symbol", "arcadia.probe.loaded/answer"));
+                Check("nrepl info on loaded var", s, got, t => Reply(t, "8") && t.Contains("The probe's answer."));
+                Send(s, Dict("id", "9", "ns", "user", "op", "eldoc", "session", session, "symbol", "map"));
+                Check("nrepl eldoc", s, got, t => Reply(t, "9") && t.Contains("12:arglists-str"));
+                Send(s, Dict("id", "10", "ns", "user", "op", "complete", "session", session, "symbol", "mapc"));
+                Check("nrepl complete", s, got, t => Reply(t, "10") && t.Contains("9:candidate6:mapcat"));
+                Send(s, Dict("id", "11", "op", "classpath", "session", session));
+                Check("nrepl classpath", s, got, t => Reply(t, "11") && t.Contains("9:classpathl"));
             }
         }
 
@@ -98,7 +122,7 @@ namespace Arcadia.Headless
         }
 
         // Reads until `ok` holds for everything received on this connection so far, or times out.
-        void Check(string what, NetworkStream s, StringBuilder got, Func<string, bool> ok)
+        bool Check(string what, NetworkStream s, StringBuilder got, Func<string, bool> ok)
         {
             var start = got.Length;
             var deadline = DateTime.Now.AddMilliseconds(timeoutMs);
@@ -110,13 +134,14 @@ namespace Arcadia.Headless
                     var n = s.Read(buf, 0, buf.Length);
                     if (n == 0) break;
                     got.Append(Encoding.UTF8.GetString(buf, 0, n));
-                    if (ok(got.ToString(start, got.Length - start))) { Pass(what); return; }
+                    if (ok(got.ToString(start, got.Length - start))) { Pass(what); return true; }
                 }
                 else Thread.Sleep(50);
             }
             var tail = got.ToString(start, got.Length - start);
             if (tail.Length > 600) tail = tail.Substring(tail.Length - 600);
-            Fail(what, "no matching reply; received: " + tail.Replace("\n", "\n"));
+            Fail(what, "no matching reply; received: " + tail.Replace("\n", "\\n"));
+            return false;
         }
     }
 }
