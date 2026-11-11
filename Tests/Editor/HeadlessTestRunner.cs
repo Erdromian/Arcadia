@@ -3,6 +3,7 @@
 // still reports when Arcadia's C# fails to compile. Entry points:
 //   -executeMethod Arcadia.Headless.HeadlessTestRunner.Run
 //       [-arcadiaResults <file>] [-arcadiaTimeout <seconds>] [-arcadiaQuiet <seconds>] [-arcadiaNoRepl]
+//       [-arcadiaPlayMode]   (enter Play mode first, then run the same tests there)
 //   The run ends when every test completes, or when results haven't changed for -arcadiaQuiet
 //   seconds (default 20): tests waiting on Play-mode frames never finish in edit mode, and are
 //   listed as pending. After the tests, ReplProbe checks the socket REPL and nREPL answer evals.
@@ -19,6 +20,7 @@ using clojure.lang;
 
 namespace Arcadia.Headless
 {
+    [InitializeOnLoad]
     public static class HeadlessTestRunner
     {
         static string resultsFile;
@@ -36,13 +38,59 @@ namespace Arcadia.Headless
             Debug.Log("[arcadia-headless] API compatibility set to .NET Framework");
         }
 
+        const string PlayKey = "Arcadia.Headless.PlayMode";
+
         public static void Run()
         {
             resultsFile = Path.GetFullPath(Arg("-arcadiaResults") ?? "arcadia-test-results.txt");
             deadline = DateTime.Now.AddSeconds(double.Parse(Arg("-arcadiaTimeout") ?? "600"));
             quietSeconds = double.Parse(Arg("-arcadiaQuiet") ?? "20");
+            var playMode = Environment.GetCommandLineArgs().Contains("-arcadiaPlayMode");
             Write("api-compat: " + PlayerSettings.GetApiCompatibilityLevel(NamedBuildTarget.Standalone)
-                  + "\nunity: " + Application.unityVersion + "\n", append: false);
+                  + "\nunity: " + Application.unityVersion + "\nmode: " + (playMode ? "play" : "edit") + "\n", append: false);
+            if (!playMode) { StartTests(); return; }
+            // Entering Play mode reloads the domain (Unity's default), which clears these statics and
+            // the Clojure runtime. Keep the settings in SessionState, which survives the reload; the
+            // static constructor below picks them up and starts the tests once Play mode is running.
+            SessionState.SetString(PlayKey, string.Join("|", resultsFile, deadline.Ticks, quietSeconds));
+            Step("entering Play mode (domain reload: " + !(EditorSettings.enterPlayModeOptionsEnabled
+                 && (EditorSettings.enterPlayModeOptions & EnterPlayModeOptions.DisableDomainReload) != 0) + ")");
+            EditorApplication.EnterPlaymode();
+        }
+
+        static HeadlessTestRunner()
+        {
+            var saved = SessionState.GetString(PlayKey, "");
+            if (saved == "") return;
+            var parts = saved.Split('|');
+            resultsFile = parts[0];
+            deadline = new DateTime(long.Parse(parts[1]));
+            quietSeconds = double.Parse(parts[2]);
+            EditorApplication.update += WaitForPlay;
+        }
+
+        static void WaitForPlay()
+        {
+            if (DateTime.Now > deadline)
+            {
+                EditorApplication.update -= WaitForPlay;
+                SessionState.EraseString(PlayKey);
+                Finish(3, "PLAY-MODE: never entered Play mode");
+                return;
+            }
+            if (!EditorApplication.isPlaying) return;
+            EditorApplication.update -= WaitForPlay;
+            SessionState.EraseString(PlayKey);
+            // Batchmode has no frame cap, so frames take a fraction of a millisecond of game time and
+            // tests that wait N frames for physics (multiarg-test's collision) see almost no time
+            // pass. Advance game time 1/60 s per frame, as a 60 fps editor would, still running flat out.
+            Time.captureDeltaTime = 1f / 60f;
+            Step("in Play mode (game time 1/60 s per frame)");
+            StartTests();
+        }
+
+        static void StartTests()
+        {
             try
             {
                 var init = AppDomain.CurrentDomain.GetAssemblies()

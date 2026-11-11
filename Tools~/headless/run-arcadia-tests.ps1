@@ -8,15 +8,19 @@ param(
     [string]$Results = (Join-Path (Split-Path (Split-Path $PSScriptRoot)) ".build/arcadia-test-results.txt"),
     [int]$TimeoutSeconds = 600,
     # Extra time for project import and script compilation before the runner's own timeout starts.
-    [int]$StartupSeconds = 300
+    [int]$StartupSeconds = 300,
+    # Run the tests in Play mode (HeadlessTestRunner enters it first) instead of edit mode.
+    [switch]$PlayMode
 )
 $repo = Split-Path (Split-Path $PSScriptRoot)
 $log = Join-Path $repo ".build/arcadia-tests-editor.log"
-$p = Start-Process -FilePath $Unity -PassThru -NoNewWindow -ArgumentList @(
+$unityArgs = @(
     "-batchmode", "-nographics", "-projectPath", "`"$Project`"",
     "-executeMethod", "Arcadia.Headless.HeadlessTestRunner.Run",
     "-arcadiaResults", "`"$Results`"", "-arcadiaTimeout", $TimeoutSeconds,
     "-logFile", "`"$log`"")
+if ($PlayMode) { $unityArgs += "-arcadiaPlayMode" }
+$p = Start-Process -FilePath $Unity -PassThru -NoNewWindow -ArgumentList $unityArgs
 $null = $p.Handle  # without -Wait, ExitCode is only kept if the handle was opened while the process ran
 # The runner's timeout only fires on editor updates; if the main thread blocks, nothing would end
 # the run. Kill the editor (and the import workers it started) once the hard limit passes.
