@@ -2,7 +2,8 @@
 // Lives in its own editor-only assembly and reaches Arcadia by reflection, so it
 // still reports when Arcadia's C# fails to compile. Entry points:
 //   -executeMethod Arcadia.Headless.HeadlessTestRunner.Run
-//       [-arcadiaResults <file>] [-arcadiaTimeout <seconds>]
+//       [-arcadiaResults <file>] [-arcadiaTimeout <seconds>] [-arcadiaNoRepl]
+//   After the tests, ReplProbe checks the socket REPL and nREPL servers answer evals.
 //   -executeMethod Arcadia.Headless.HeadlessTestRunner.UseNetFramework   (with -quit)
 // Exit codes: 0 all pass, 1 failures/errors, 2 Arcadia did not load, 3 timeout.
 using System;
@@ -20,6 +21,9 @@ namespace Arcadia.Headless
         static string resultsFile;
         static DateTime deadline;
         static Var poll;
+        static ReplProbe probe;
+        static int testCode;
+        static string testText;
 
         public static void UseNetFramework()
         {
@@ -83,13 +87,28 @@ namespace Arcadia.Headless
                 var summary = $"complete: {complete}\npass: {pass}\nfail: {fail}\nerror: {error}\n";
                 // No assertions at all means the runner found no tests: never report that as a pass.
                 if (pass + fail + error == 0) summary += "NO-RESULTS: no test assertions ran\n";
-                Finish(!complete ? 3 : fail + error > 0 || pass == 0 ? 1 : 0, summary + "\n" + r.nth(1));
+                testCode = !complete ? 3 : fail + error > 0 || pass == 0 ? 1 : 0;
+                testText = summary + "\n" + r.nth(1);
+                if (Environment.GetCommandLineArgs().Contains("-arcadiaNoRepl")) { Finish(testCode, testText); return; }
+                Step("probing REPL servers");
+                probe = new ReplProbe(Application.unityVersion, 60);
+                probe.Start();
+                EditorApplication.update += TickRepl;
             }
             catch (Exception e)
             {
                 EditorApplication.update -= Tick;
                 Finish(2, "RUNNER-ERROR: " + Root(e));
             }
+        }
+
+        // Keeps the editor updating so main-thread evals run, until both probes finish.
+        static void TickRepl()
+        {
+            if (!probe.Done) return;
+            EditorApplication.update -= TickRepl;
+            var code = testCode != 0 ? testCode : probe.Ok ? 0 : 1;
+            Finish(code, testText + "\n" + probe.Report);
         }
 
         static void Finish(int code, string text)
