@@ -477,7 +477,13 @@ public class ArcadiaBehaviour : MonoBehaviour, ISerializationCallbackReceiver
 	public void PrintContext (int infInx)
 	{
 		var inf = ifnInfos_[infInx];
-		Debug.LogError("Context: key: " + inf.key + "; fn: " + inf.fn + "; GameObject: " + _go.name + "; GameObject id: " + _go.GetInstanceID(), _go);
+		// GetInstanceID is an obsolete-as-error API from Unity 6000.6; GetEntityId exists from 6000.3.
+#if UNITY_6000_3_OR_NEWER
+		var goId = _go.GetEntityId();
+#else
+		var goId = _go.GetInstanceID();
+#endif
+		Debug.LogError("Context: key: " + inf.key + "; fn: " + inf.fn + "; GameObject: " + _go.name + "; GameObject id: " + goId, _go);
 	}
 
 	// ============================================================

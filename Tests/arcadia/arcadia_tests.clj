@@ -623,8 +623,11 @@
         (t (at/is (= (.. clone-2 transform position)
                      position)
                   "3-ary instantiate uses new position"))
-        (t (at/is (= (.. clone-2 transform rotation)
-                     rotation)
+        ;; Unity's Quaternion == (dot product within 1e-6 of 1), not `=`: the Transform hands back
+        ;; the random rotation with float rounding, so exact equality failed about half the time.
+        (t (at/is (UnityEngine.Quaternion/op_Equality
+                    (.. clone-2 transform rotation)
+                    rotation)
              "3-ary instantiate uses new rotation"))))))
 
 ;; ------------------------------------------------------------

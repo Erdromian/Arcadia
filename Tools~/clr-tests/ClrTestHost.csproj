@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Hosts ClojureCLR on .NET Framework 4.8 to run a ClojureCLR test suite without Unity. See docs/plans (U3, U5).
+       ClojureRuntime=bundled (default): Infrastructure/*.dll as committed.
+       ClojureRuntime=1.12.6: upstream ClojureCLR from NuGet, plus the libraries its test suite loads. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <ClojureRuntime Condition="'$(ClojureRuntime)' == ''">bundled</ClojureRuntime>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <NuGetLockFilePath>packages.$(ClojureRuntime).lock.json</NuGetLockFilePath>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <None Include="run-tests.clj" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(ClojureRuntime)' == 'bundled'">
+    <Reference Include="Clojure"><HintPath>../../Infrastructure/Clojure.dll</HintPath></Reference>
+    <None Include="../../Infrastructure/*.dll" CopyToOutputDirectory="PreserveNewest" LinkBase="." />
+  </ItemGroup>
+  <ItemGroup Condition="'$(ClojureRuntime)' != 'bundled'">
+    <PackageReference Include="Clojure" Version="$(ClojureRuntime)" />
+    <!-- Test-only libraries upstream's run_test.clj loads (versions from its Directory.Packages.props). -->
+    <PackageReference Include="clojure.tools.namespace" Version="1.5.5" />
+    <PackageReference Include="clojure.data.generators" Version="1.1.0" />
+    <PackageReference Include="clojure.test.generative" Version="1.1.2" />
+    <PackageReference Include="clojure.test.check" Version="1.1.4" />
+  </ItemGroup>
+</Project>

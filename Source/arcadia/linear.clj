@@ -22,11 +22,23 @@
     (with-meta x (assoc (meta x) :tag tag))
     x))
 
+(defn- call-form
+  "Builds a call to `op`. For a static method written `Type/method`, emits
+  the equivalent `(. Type method args...)`: ClojureCLR 1.12 compiles nested
+  `Type/method` calls in time exponential in nesting depth, while the dot
+  form stays linear, and the def-vop-lower functions nest up to 20 deep."
+  [op args]
+  (if (and (symbol? op)
+           (namespace op)
+           (instance? System.Type (resolve (symbol (namespace op)))))
+    `(. ~(symbol (namespace op)) ~(symbol (name op)) ~@args)
+    (cons op args)))
+
 (defn nestl [op args]
   (cond
-    (next args) (reduce #(list op %1 %2) args)
-    (first args) (list op (first args))
-    :else (list op)))
+    (next args) (reduce #(call-form op [%1 %2]) args)
+    (first args) (call-form op [(first args)])
+    :else (call-form op [])))
 
 ;; remove this when we fix #298
 (defn- casting

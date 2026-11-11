@@ -90,6 +90,7 @@ namespace Arcadia
             LoadLiterals();
             InitializeLoadPathExtensions();
             SetClojureLoadPath();
+            InitUserNamespace();
             BuildPipeline.EnsureCompiledFolders();
             StartEditorCallbacks();
             StartWatching();
@@ -101,6 +102,16 @@ namespace Arcadia
             Debug.Log("Arcadia Started!");
 
             initialized = true;
+        }
+
+        // ClojureCLR 1.12 only refers clojure.core into `user` from RT.Init (which upstream's
+        // Clojure.Main calls); without it the REPLs, which evaluate in `user`, can't resolve `+`.
+        // PostBootstrapInit is the part of RT.Init that does that (it also loads user.clj and
+        // starts any clojure.server.* servers, as Clojure does). The rest of RT.Init re-loads the
+        // spec DLLs with Assembly.LoadFile, which Unity has already loaded from Infrastructure.
+        static void InitUserNamespace()
+        {
+            RT.PostBootstrapInit();
         }
 
         private static void InitializeLoadPathExtensions()
