@@ -47,8 +47,8 @@ namespace Arcadia.Headless
 
         void SocketRepl()
         {
-            // "localhost", as Arcadia's repl-client scripts use: clojure.core.server binds the first
-            // address localhost resolves to, which on Windows is usually ::1, not 127.0.0.1.
+            // "localhost", as Arcadia's repl-client scripts use. The server is pinned to 127.0.0.1
+            // (socket_repl.clj's server-defaults); localhost also reaches it when it resolves to ::1 first.
             using (var c = new TcpClient("localhost", SocketPort))
             {
                 var s = c.GetStream();
